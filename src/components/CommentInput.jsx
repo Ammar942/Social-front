@@ -52,7 +52,7 @@ const CommentInput = ({ postId, onCommentAdded }) => {
       <button
         onClick={handleAddComment}
         disabled={loading || !text.trim()}
-        className="px-3 py-1 cursor-pointer bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+        className="px-3 py-1 cursor-pointer bg-violet-900 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
       >
         {loading ? (
           <span className="loading loading-spinner loading-md"></span>

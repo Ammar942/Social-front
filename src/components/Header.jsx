@@ -1,9 +1,9 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../contexts/auth/useAuth";
 
 const Header = () => {
   const { user, logout } = useAuth();
-
+  const navigate = useNavigate();
   return (
     <div className="navbar bg-blue-50 shadow-sm px-4">
       <div className="flex-1">
@@ -17,8 +17,8 @@ const Header = () => {
           to="/feed"
           className={({ isActive }) =>
             isActive
-              ? "text-l font-bold text-blue-900 "
-              : "btn btn-ghost text-blue-600"
+              ? "text-l font-bold text-violet-900 "
+              : "btn btn-ghost text-violet-600"
           }
         >
           Home
@@ -27,15 +27,18 @@ const Header = () => {
           to="/profile"
           className={({ isActive }) =>
             isActive
-              ? "text-l font-bold bg-blue-900"
-              : "btn btn-ghost text-blue-600"
+              ? "text-l font-bold bg-violet-900"
+              : "btn btn-ghost text-violet-600"
           }
         >
           Profile
         </NavLink>
         {user && (
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
             className="btn btn-outline btn-sm bg-blue-50"
           >
             Logout

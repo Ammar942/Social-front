@@ -34,7 +34,12 @@ const useFetchPosts = () => {
     });
 
   const deletePost = async (id) => axios.delete(`/posts/${id}`);
-
+  const sharePost = async (id, title, description) => {
+    await axios.post(`/posts/${id}/share`, {
+      title,
+      description,
+    });
+  };
   return {
     posts,
     loading,
@@ -43,6 +48,7 @@ const useFetchPosts = () => {
     createPost,
     updatePost,
     deletePost,
+    sharePost,
   };
 };
 

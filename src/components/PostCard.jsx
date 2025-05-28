@@ -3,9 +3,17 @@ import CommentList from "./CommentList";
 import CommentInput from "./CommentInput";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import ReactionBar from "./ReactionButtons";
 
-const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
-  const [comments, setComments] = useState(post.comments || []);
+const PostCard = ({
+  post: initialPost,
+  user,
+  openEditPopup,
+  openDeleteConfirm,
+  openShareModal,
+}) => {
+  const [comments, setComments] = useState(initialPost.comments || []);
+  const [post, setPost] = useState(initialPost);
   const navigate = useNavigate();
   const handleSeeMoreComments = () => {
     navigate(`/posts/${post._id}`);
@@ -19,6 +27,16 @@ const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
     }
   };
 
+  const handleReact = async (type) => {
+    try {
+      await axios.post(`/posts/${post._id}/reactions`, { type });
+      const updatedPost = await axios.get(`/posts/${post._id}`);
+      setPost(updatedPost.data.data);
+    } catch (err) {
+      console.error("Failed to react:", err);
+    }
+  };
+
   useEffect(() => {
     fetchComments();
   }, []);
@@ -29,7 +47,7 @@ const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
     setComments((prev) => [...prev, newComment]);
   };
   return (
-    <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[550px] overflow-hidden flex flex-col justify-items-center justify-between">
+    <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[650px] overflow-hidden flex flex-col justify-items-center justify-between">
       <div className="flex justify-between items-center">
         <span className="text-lg font-semibold text-blue-900">
           {post.author.username}{" "}
@@ -100,14 +118,35 @@ const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
       <p className="mt-2 text-sm text-gray-600 line-clamp-4">
         {post.description}
       </p>
-
+      <ReactionBar post={post} onReact={handleReact} />
       <div className="mt-4 flex justify-between text-sm text-gray-500">
-        <span>👍 {post.reactions?.total || 0} reactions</span>
+        {post.reactions.total === 0 && (
+          <span className="text-gray-600">No reactions yet</span>
+        )}
+        <span>
+          {Object.entries(post.reactions.summary || {}).map(([type, count]) => (
+            <span key={type} className="mr-2">
+              {type === "like" && "👍"}
+              {type === "love" && "❤️"}
+              {type === "funny" && "😂"} {count}
+            </span>
+          ))}
+        </span>
+
         <span
-          className="over:underline  cursor-pointer"
+          className="over:underline text-violet-700  cursor-pointer"
           onClick={handleSeeMoreComments}
         >
           💬 {comments?.length || 0} comments
+        </span>
+        <span className="">
+          {" "}
+          <button
+            onClick={() => openShareModal(post)}
+            className="text-sm text-violet-700 cursor-pointer font-semibold  ml-auto"
+          >
+            🔁 Share
+          </button>
         </span>
       </div>
       {comments.length > 0 && (
@@ -118,7 +157,7 @@ const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
       {comments.length > 1 && (
         <button
           onClick={handleSeeMoreComments}
-          className="text-blue-700 text-sm hover:underline mt-1 cursor-pointer"
+          className="text-violet-800 text-sm hover:underline mt-1 cursor-pointer"
         >
           See all comments
         </button>

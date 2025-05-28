@@ -66,7 +66,7 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
         {comments.map((comment) => (
           <div
             key={comment._id}
-            className="bg-gray-100 p-2 rounded shadow-sm flex justify-between items-start"
+            className="bg-violet-950 text-white p-2 rounded shadow-sm flex justify-between items-start"
           >
             <div className="flex-1">
               <p className="text-sm font-semibold">

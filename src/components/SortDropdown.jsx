@@ -1,6 +1,6 @@
 const SortDropdown = ({ sortBy, setSortBy }) => (
-  <div className="dropdown mb-4">
-    <label tabIndex={0} className="btn m-1 bg-blue-100">
+  <div className="dropdown mb-4 ">
+    <label tabIndex={0} className="btn m-1 bg-violet-700 text-white">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
