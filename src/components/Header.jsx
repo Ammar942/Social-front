@@ -18,7 +18,7 @@ const Header = () => {
           className={({ isActive }) =>
             isActive
               ? "text-l font-bold text-blue-900 "
-              : "btn btn-ghost text-blue-300"
+              : "btn btn-ghost text-blue-600"
           }
         >
           Home

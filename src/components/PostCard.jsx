@@ -1,6 +1,35 @@
+import { useEffect, useState } from "react";
+import CommentList from "./CommentList";
+import CommentInput from "./CommentInput";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
+  const [comments, setComments] = useState(post.comments || []);
+  const navigate = useNavigate();
+  const handleSeeMoreComments = () => {
+    navigate(`/posts/${post._id}`);
+  };
+  const fetchComments = async () => {
+    try {
+      const res = await axios.get(`/posts/${post._id}/comments`);
+      setComments(res.data.data);
+    } catch (err) {
+      console.error("Failed to fetch comments:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchComments();
+  }, []);
+  const handleCommentAdded = (newComment) => {
+    fetchComments();
+    console.log(comments.length);
+    comments.length = comments.length + 1;
+    setComments((prev) => [...prev, newComment]);
+  };
   return (
-    <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[500px] overflow-hidden flex flex-col justify-items-center justify-between">
+    <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[550px] overflow-hidden flex flex-col justify-items-center justify-between">
       <div className="flex justify-between items-center">
         <span className="text-lg font-semibold text-blue-900">
           {post.author.username}{" "}
@@ -74,8 +103,27 @@ const PostCard = ({ post, user, openEditPopup, openDeleteConfirm }) => {
 
       <div className="mt-4 flex justify-between text-sm text-gray-500">
         <span>👍 {post.reactions?.total || 0} reactions</span>
-        <span>💬 {post.comments?.length || 0} comments</span>
+        <span
+          className="over:underline  cursor-pointer"
+          onClick={handleSeeMoreComments}
+        >
+          💬 {comments?.length || 0} comments
+        </span>
       </div>
+      {comments.length > 0 && (
+        <div className="mt-2">
+          <CommentList comments={[comments[0]]} fetchComments={fetchComments} />
+        </div>
+      )}
+      {comments.length > 1 && (
+        <button
+          onClick={handleSeeMoreComments}
+          className="text-blue-700 text-sm hover:underline mt-1 cursor-pointer"
+        >
+          See all comments
+        </button>
+      )}
+      <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
     </div>
   );
 };

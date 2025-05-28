@@ -607,7 +607,7 @@
 // };
 
 // export default FeedPage;
-// add reactions and comments and share functionality
+// add reactions and share functionality
 // make sort outer function
 // profile page
 import { useEffect, useState } from "react";

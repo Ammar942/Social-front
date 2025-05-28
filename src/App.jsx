@@ -10,6 +10,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Signup from "./pages/Signup";
 import FeedPage from "./pages/FeedPage";
 import { ToastContainer } from "react-toastify";
+import PostPage from "./pages/PostPage";
 function Profile() {
   return (
     <h2 className="text-center mt-10">Profile Page (to be implemented)</h2>
@@ -39,6 +40,7 @@ function App() {
             }
           />
           <Route path="/feed" element={<FeedPage />} />
+          <Route path="/posts/:id" element={<PostPage />} />
           <Route
             path="/profile"
             element={

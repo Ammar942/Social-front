@@ -11,6 +11,7 @@ const useFetchPosts = () => {
     try {
       const res = await axios.get("/posts");
       setPosts(res.data.data);
+      console.log(res.data.data);
     } catch (err) {
       setError("Failed to fetch posts ");
       console.error(err);
