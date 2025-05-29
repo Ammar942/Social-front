@@ -27,7 +27,7 @@ const Header = () => {
           to="/profile"
           className={({ isActive }) =>
             isActive
-              ? "text-l font-bold bg-violet-900"
+              ? "text-l font-bold text-violet-900"
               : "btn btn-ghost text-violet-600"
           }
         >

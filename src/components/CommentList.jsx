@@ -30,6 +30,8 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
     setComments((prev) =>
       prev.map((c) => (c._id === editingCommentId ? updatedComment : c))
     );
+    console.log(comments);
+    setEditedText("");
     setEditingCommentId(null);
   };
   const handleCancel = () => {
@@ -66,32 +68,34 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
         {comments.map((comment) => (
           <div
             key={comment._id}
-            className="bg-violet-950 text-white p-2 rounded shadow-sm flex justify-between items-start"
+            className="bg-violet-800  text-white p-2 rounded-xl shadow-sm flex justify-between items-start"
           >
             <div className="flex-1">
               <p className="text-sm font-semibold">
                 {comment.author?.username || "Anonymous"}
               </p>
               {editingCommentId === comment._id ? (
-                <>
+                <div className="m-2">
                   <textarea
                     value={editedText}
                     onChange={(e) => setEditedText(e.target.value)}
-                    className="text-sm w-full border rounded p-1"
+                    className="text-sm w-full border border-violet-400 rounded p-1"
                   />
-                  <button
-                    onClick={handleSave}
-                    className="text-blue-600 text-sm mt-1 cursor-pointer hover:underline"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="text-red-600 text-sm mt-1 cursor-pointer ms-5 hover:underline"
-                  >
-                    Cancel
-                  </button>
-                </>
+                  <div className="flex justify-end  ">
+                    <button
+                      onClick={handleSave}
+                      className="text-violet-800 px-2 py-1 rounded-2xl font-semibold bg-blue-200 text-sm mt-1 cursor-pointer hover:underline"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="text-red-400 bg-gray-900 rounded-2xl px-2 py-1 font-semibold text-sm mt-1 cursor-pointer ms-5 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <p className="text-sm line-clamp-1">{comment.text}</p>
               )}

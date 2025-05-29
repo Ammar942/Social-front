@@ -28,8 +28,8 @@ const CommentInput = ({ postId, onCommentAdded }) => {
         }
       );
       console.log(res);
-      const newComment = await res.data;
-
+      const newComment = await res.data.data;
+      console.log(newComment);
       onCommentAdded(newComment);
       setText("");
     } catch (err) {

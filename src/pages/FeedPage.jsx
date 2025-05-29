@@ -1,7 +1,9 @@
-// add share functionality
-// make sort outer function
-// profile page
+// enable video preview
 // enhance ui for sign in and sign up
+// enhance ui for profile page
+// skeleton loading for profile page
+// handle error and empty states for profile page
+// clean up code
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -242,6 +244,7 @@ const FeedPage = () => {
               openEditPopup={openEditModal}
               openDeleteConfirm={openDeleteConfirm}
               openShareModal={openShareModal}
+              // fetchPosts={fetchPosts}
             />
           ))}
         </div>

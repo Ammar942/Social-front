@@ -67,7 +67,7 @@ const PostFormModal = ({
             <input
               id="fileInput"
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               onChange={handleFileChange}
               className="hidden"
             />

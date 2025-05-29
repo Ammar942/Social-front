@@ -10,6 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import useFetchPosts from "../hooks/useFetchPosts";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import PostFormModal from "../components/PostFormModal";
+import ReactionBar from "../components/ReactionButtons";
 const PostPage = () => {
   const { loading, createPost, updatePost, deletePost } = useFetchPosts();
   const { user } = useAuth();
@@ -118,31 +119,22 @@ const PostPage = () => {
   useEffect(() => {
     fetchPost();
   }, [id]);
-
+  const handleReact = async (type) => {
+    try {
+      await axios.post(`/posts/${post._id}/reactions`, { type });
+      const updatedPost = await axios.get(`/posts/${post._id}`);
+      setPost(updatedPost.data.data);
+    } catch (err) {
+      console.error("Failed to react:", err);
+    }
+  };
   if (loading) return <div>Loading post...</div>;
   if (!post) return <div>Post not found</div>;
 
   return (
     <>
       <Header />
-      {/* <div className="max-w-2xl mx-auto p-4">
-        <h2 className="text-xl font-bold mb-2">{post.title}</h2>
-        {post.mediaUrl &&
-          (post.mediaUrl.endsWith(".mp4") ? (
-            <video controls className="w-full rounded">
-              <source src={post.mediaUrl} type="video/mp4" />
-            </video>
-          ) : (
-            <img src={post.mediaUrl} alt="" className="w-full rounded" />
-          ))}
-        <p className="mt-2 text-gray-700">{post.description}</p>
-        <div className="mt-4 text-gray-500">
-          👍 {post.reactions?.total || 0} reactions · 💬 {comments.length}{" "}
-          comments
-        </div>
-        <CommentList comments={comments} />
-        <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
-      </div> */}
+
       <div className="card bg-blue-100 shadow-md max-w-2xl mx-auto p-4 flex flex-col justify-items-center justify-between mt-5">
         <div className="flex justify-between items-center">
           <span className="text-lg font-semibold text-blue-900">
@@ -218,9 +210,22 @@ const PostPage = () => {
           {post.description}
         </p>
 
+        <ReactionBar post={post} onReact={handleReact} />
         <div className="mt-4 flex justify-between text-sm text-gray-500">
-          <span>👍 {post.reactions?.total || 0} reactions</span>
-          <span>💬 {post.comments?.length || 0} comments</span>
+          {post.reactions.total === 0 && (
+            <span className="text-gray-600">No reactions yet</span>
+          )}
+          <span>
+            {Object.entries(post.reactions.summary || {}).map(
+              ([type, count]) => (
+                <span key={type} className="mr-2">
+                  {type === "like" && "👍"}
+                  {type === "love" && "❤️"}
+                  {type === "funny" && "😂"} {count}
+                </span>
+              )
+            )}
+          </span>
         </div>
         <CommentList comments={comments} />
         <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />

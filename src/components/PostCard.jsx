@@ -11,6 +11,7 @@ const PostCard = ({
   openEditPopup,
   openDeleteConfirm,
   openShareModal,
+  // fetchPosts,
 }) => {
   const [comments, setComments] = useState(initialPost.comments || []);
   const [post, setPost] = useState(initialPost);
@@ -41,10 +42,18 @@ const PostCard = ({
     fetchComments();
   }, []);
   const handleCommentAdded = (newComment) => {
-    fetchComments();
     console.log(comments.length);
-    comments.length = comments.length + 1;
     setComments((prev) => [...prev, newComment]);
+    // fetchComments();
+    setPost((prev) => ({
+      ...prev,
+      comments: [...prev.comments, newComment],
+    }));
+    // if (comments.length === 0) {
+    //   if (fetchPosts) {
+    //     fetchPosts();
+    //   }
+    // }
   };
   return (
     <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[650px] overflow-hidden flex flex-col justify-items-center justify-between">

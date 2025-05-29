@@ -11,11 +11,7 @@ import Signup from "./pages/Signup";
 import FeedPage from "./pages/FeedPage";
 import { ToastContainer } from "react-toastify";
 import PostPage from "./pages/PostPage";
-function Profile() {
-  return (
-    <h2 className="text-center mt-10">Profile Page (to be implemented)</h2>
-  );
-}
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -45,7 +41,7 @@ function App() {
             path="/profile"
             element={
               <ProtectedRoute>
-                <Profile />
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
