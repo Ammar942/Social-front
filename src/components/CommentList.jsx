@@ -64,14 +64,14 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
 
   return (
     <>
-      <div className="mt-2 space-y-2">
+      <div className="mt-2 space-y-2 ">
         {comments.map((comment) => (
           <div
             key={comment._id}
-            className="bg-violet-800  text-white p-2 rounded-xl shadow-sm flex justify-between items-start"
+            className="bg-violet-800  text-white p-3 rounded-xl shadow-sm flex justify-between items-start"
           >
             <div className="flex-1">
-              <p className="text-sm font-semibold">
+              <p className="text-sm font-semibold mb-2">
                 {comment.author?.username || "Anonymous"}
               </p>
               {editingCommentId === comment._id ? (
@@ -97,7 +97,7 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm line-clamp-1">{comment.text}</p>
+                <p className="text-sm line-clamp-1 ms-2">{comment.text}</p>
               )}
             </div>
 
