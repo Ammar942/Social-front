@@ -6,7 +6,8 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
-  axios.defaults.baseURL = "http://localhost:3000";
+  axios.defaults.baseURL =
+    "https://social-backend-production-6803.up.railway.app/";
 
   useEffect(() => {
     if (token) {
