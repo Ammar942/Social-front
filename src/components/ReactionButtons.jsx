@@ -1,9 +1,4 @@
 import useAuth from "../contexts/auth/useAuth";
-// const emojiToType = {
-//   "👍": "like",
-//   "❤️": "love",
-//   "😂": "funny",
-// };
 
 const typeToEmoji = {
   like: "👍",

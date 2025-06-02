@@ -3,6 +3,8 @@ import useAuth from "../contexts/auth/useAuth";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import DeleteCommentModal from "./DeleteCommentModal";
+import { FaRegEdit, FaRegTrashAlt, FaUserCircle } from "react-icons/fa";
+import moment from "moment";
 
 const CommentList = ({ comments: initialComments, fetchComments }) => {
   const { user } = useAuth();
@@ -12,36 +14,45 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [comments, setComments] = useState(initialComments || []);
   const { id } = useParams();
+
   useEffect(() => {
-    // fetchComments();
     setComments(initialComments || []);
   }, [initialComments]);
+
   const handleEdit = (comment) => {
     setEditingCommentId(comment._id);
     setEditedText(comment.text);
   };
 
   const handleSave = async () => {
-    const res = await axios.patch(`posts/${id}/comments/${editingCommentId}`, {
-      text: editedText,
-    });
-    console.log(res);
-    const updatedComment = res.data.data;
-    setComments((prev) =>
-      prev.map((c) => (c._id === editingCommentId ? updatedComment : c))
-    );
-    console.log(comments);
-    setEditedText("");
-    setEditingCommentId(null);
+    try {
+      const res = await axios.patch(
+        `posts/${id}/comments/${editingCommentId}`,
+        {
+          text: editedText,
+        }
+      );
+      const updatedComment = res.data.data;
+      setComments((prev) =>
+        prev.map((c) => (c._id === editingCommentId ? updatedComment : c))
+      );
+      setEditedText("");
+      setEditingCommentId(null);
+    } catch (err) {
+      console.error("Error saving comment:", err);
+    }
   };
+
   const handleCancel = () => {
     setEditingCommentId(null);
     setEditedText("");
   };
-  const handleDelete = async (commentId) => {
+
+  const handleDelete = (commentId) => {
     setCommentToDelete(commentId);
     setShowModal(true);
   };
+
   const confirmDelete = async () => {
     try {
       await axios.delete(`posts/${id}/comments/${commentToDelete}`);
@@ -55,83 +66,89 @@ const CommentList = ({ comments: initialComments, fetchComments }) => {
     setShowModal(false);
     setCommentToDelete(null);
   };
+
   const cancelDelete = () => {
     setShowModal(false);
     setCommentToDelete(null);
   };
-  if (!comments?.length)
-    return <p className="text-gray-500">No comments yet.</p>;
+
+  if (!comments || comments.length === 0)
+    return <p className="text-gray-500 text-sm italic">No comments yet.</p>;
 
   return (
     <>
-      <div className="mt-2 space-y-2 ">
+      <div className="space-y-3">
+        {" "}
+        {/* Increased space between comments */}
         {comments.map((comment) => (
           <div
             key={comment._id}
-            className="bg-violet-800  text-white p-3 rounded-xl shadow-sm flex justify-between items-start"
+            className="flex items-start space-x-3 p-3 bg-gray-100 rounded-lg shadow-sm"
           >
+            {/* User Avatar */}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-400 flex items-center justify-center flex-shrink-0">
+              <FaUserCircle className="text-white text-lg" />
+            </div>
+
             <div className="flex-1">
-              <p className="text-sm font-semibold mb-2">
-                {comment.author?.username || "Anonymous"}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-800">
+                  {comment.author?.username || "Anonymous"}
+                  <span className="ml-2 text-xs text-gray-500 font-normal">
+                    {moment(comment.createdAt).fromNow()}
+                  </span>
+                </p>
+                {/* Edit and Delete Icons for owner */}
+                {user?.userId === comment.author?._id && (
+                  <div className="flex space-x-2 text-gray-500">
+                    <button
+                      onClick={() => handleEdit(comment)}
+                      className="hover:text-purple-600 transition-colors cursor-pointer"
+                      aria-label="Edit Comment"
+                      title="Edit Comment"
+                    >
+                      <FaRegEdit size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(comment._id)}
+                      className="hover:text-red-600 transition-colors cursor-pointer"
+                      aria-label="Delete Comment"
+                      title="Delete Comment"
+                    >
+                      <FaRegTrashAlt size={14} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Comment Text or Edit Input */}
               {editingCommentId === comment._id ? (
-                <div className="m-2">
+                <div className="mt-1">
                   <textarea
                     value={editedText}
                     onChange={(e) => setEditedText(e.target.value)}
-                    className="text-sm w-full border border-violet-400 rounded p-1"
+                    className="w-full p-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    rows="2"
                   />
-                  <div className="flex justify-end  ">
+                  <div className="flex justify-end space-x-2 mt-1">
                     <button
                       onClick={handleSave}
-                      className="text-violet-800 px-2 py-1 rounded-2xl font-semibold bg-blue-200 text-sm mt-1 cursor-pointer hover:underline"
+                      className="px-3 py-1 bg-purple-600 text-white text-xs rounded-md hover:bg-purple-700 cursor-pointer transition-colors"
                     >
                       Save
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="text-red-400 bg-gray-900 rounded-2xl px-2 py-1 font-semibold text-sm mt-1 cursor-pointer ms-5 hover:underline"
+                      className="px-3 py-1 bg-gray-300 text-gray-800 text-xs rounded-md hover:bg-gray-400 cursor-pointer transition-colors"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm line-clamp-1 ms-2">{comment.text}</p>
+                <p className="text-gray-700 text-sm mt-1">{comment.text}</p>
               )}
             </div>
-
-            {user?.userId === comment.author?._id && (
-              <div className="flex gap-2 ml-2 mt-1">
-                <button
-                  onClick={() => handleEdit(comment)}
-                  className="text-blue-600 cursor-pointer hover:text-blue-800 text-sm"
-                  title="Edit Comment"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleDelete(comment._id)}
-                  className="text-red-600 cursor-pointer hover:text-red-800 text-sm"
-                  title="Delete Comment"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="red"
-                    className="size-5 cursor-pointer"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                    />
-                  </svg>
-                </button>
-              </div>
-            )}
           </div>
         ))}
       </div>

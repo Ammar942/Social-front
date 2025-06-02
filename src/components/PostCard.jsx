@@ -4,6 +4,18 @@ import CommentInput from "./CommentInput";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ReactionBar from "./ReactionButtons";
+import {
+  FaRegEdit,
+  FaRegTrashAlt,
+  FaShareAlt,
+  FaThumbsUp,
+  FaHeart,
+  FaLaughSquint,
+  FaCommentDots,
+  FaUserCircle,
+} from "react-icons/fa";
+import moment from "moment";
+import { toast } from "react-toastify";
 
 const PostCard = ({
   post: initialPost,
@@ -16,9 +28,11 @@ const PostCard = ({
   const [comments, setComments] = useState(initialPost.comments || []);
   const [post, setPost] = useState(initialPost);
   const navigate = useNavigate();
+
   const handleSeeMoreComments = () => {
     navigate(`/posts/${post._id}`);
   };
+
   const fetchComments = async () => {
     try {
       const res = await axios.get(`/posts/${post._id}/comments`);
@@ -29,6 +43,13 @@ const PostCard = ({
   };
 
   const handleReact = async (type) => {
+    if (!user) {
+      toast.info("Please log in to react to posts.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
     try {
       await axios.post(`/posts/${post._id}/reactions`, { type });
       const updatedPost = await axios.get(`/posts/${post._id}`);
@@ -41,137 +62,129 @@ const PostCard = ({
   useEffect(() => {
     fetchComments();
   }, []);
+
   const handleCommentAdded = (newComment) => {
-    console.log(comments.length);
     setComments((prev) => [...prev, newComment]);
-    // fetchComments();
     setPost((prev) => ({
       ...prev,
       comments: [...prev.comments, newComment],
     }));
-    // if (comments.length === 0) {
-    //   if (fetchPosts) {
-    //     fetchPosts();
-    //   }
-    // }
   };
+
   return (
-    <div className="card bg-blue-100 shadow-md p-4 w-full max-w-md h-[650px] overflow-hidden flex flex-col justify-items-center justify-between">
-      <div className="flex justify-between items-center">
-        <span className="text-lg font-semibold text-blue-900">
-          {post.author.username}{" "}
-        </span>
-        <span className="text-sm text-gray-500">
-          {new Date(post.createdAt).toLocaleDateString()}
-        </span>
-      </div>
-
-      {post.sharedFrom && (
-        <span className="text-xs font-semibold text-gray-700 italic ">
-          🔁 Shared from {post.sharedFrom.author.username}
-        </span>
-      )}
-      <div className="flex justify-between items-start">
-        <h3 className="text-lg font-bold line-clamp-3">{post.title}</h3>
-
+    <div className="bg-white rounded-lg shadow-md p-4 w-full max-w-xl mx-auto mb-6">
+      {/* Post Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-3">
+          {/* User Avatar */}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center">
+            <FaUserCircle className="text-white text-xl" />
+          </div>
+          <div>
+            <span className="block text-gray-800 font-semibold text-sm">
+              {post.author.username}
+            </span>
+            <span className="block text-gray-500 text-xs">
+              {moment(post.createdAt).fromNow()}
+            </span>
+          </div>
+        </div>
+        {/* Edit and Delete Icons */}
         {user?.userId === post.author._id && (
-          <div className="flex gap-2">
+          <div className="flex space-x-2 text-gray-500">
             <button
-              className="cursor-pointer"
               onClick={() => openEditPopup(post)}
+              className="hover:text-purple-600 cursor-pointer transition-colors"
               aria-label="Edit Post"
             >
-              ✏️
+              <FaRegEdit size={18} />
             </button>
             <button
               onClick={() => openDeleteConfirm(post._id)}
+              className="hover:text-red-600 cursor-pointer transition-colors"
               aria-label="Delete Post"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="red"
-                className="size-5 cursor-pointer"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                />
-              </svg>
+              <FaRegTrashAlt size={18} />
             </button>
           </div>
         )}
       </div>
 
+      <h3 className="text-gray-800 font-medium text-base mb-3">{post.title}</h3>
+
+      {/* Post Media (Image/Video) */}
       {post.mediaUrl && (
-        <>
+        <div className="mb-4 rounded-lg overflow-hidden">
           {post.mediaUrl.endsWith(".mp4") ? (
-            <video controls className="w-full max-h-96 object-contain rounded">
+            <video controls className="w-full h-auto max-h-96 object-cover">
               <source src={post.mediaUrl} type="video/mp4" />
             </video>
           ) : (
-            <div className="aspect-w-16 aspect-h-9">
-              <img
-                src={post.mediaUrl}
-                alt=""
-                className="object-contain w-full h-full"
-              />
-            </div>
+            <img
+              src={post.mediaUrl}
+              alt={post.title}
+              className="w-full h-auto max-h-96 object-cover"
+            />
           )}
-        </>
-      )}
-
-      <p className="mt-2 text-sm text-gray-600 line-clamp-4">
-        {post.description}
-      </p>
-      <ReactionBar post={post} onReact={handleReact} />
-      <div className="mt-4 flex justify-between text-sm text-gray-500">
-        {post.reactions.total === 0 && (
-          <span className="text-gray-600">No reactions yet</span>
-        )}
-        <span>
-          {Object.entries(post.reactions.summary || {}).map(([type, count]) => (
-            <span key={type} className="mr-2">
-              {type === "like" && "👍"}
-              {type === "love" && "❤️"}
-              {type === "funny" && "😂"} {count}
-            </span>
-          ))}
-        </span>
-
-        <span
-          className="over:underline text-violet-700  cursor-pointer"
-          onClick={handleSeeMoreComments}
-        >
-          💬 {comments?.length || 0} comments
-        </span>
-        <span className="">
-          {" "}
-          <button
-            onClick={() => openShareModal(post)}
-            className="text-sm text-violet-700 cursor-pointer font-semibold  ml-auto"
-          >
-            🔁 Share
-          </button>
-        </span>
-      </div>
-      {comments.length > 0 && (
-        <div className="mt-2">
-          <CommentList comments={[comments[0]]} fetchComments={fetchComments} />
         </div>
       )}
-      {comments.length > 1 && (
-        <button
-          onClick={handleSeeMoreComments}
-          className="text-violet-800 text-sm hover:underline mt-1 cursor-pointer"
-        >
-          See all comments
-        </button>
-      )}
-      <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
+
+      {/* Post Content/Description */}
+      <p className="text-gray-700 text-sm mb-4">{post.description}</p>
+      {/* Reaction Summary and Action Buttons Row */}
+      <div className="flex items-center justify-between text-gray-600 text-sm mb-4 border-b border-gray-200 pb-3">
+        {/* Reaction Buttons Bar */}
+        <ReactionBar post={post} onReact={handleReact} />
+        <div className="flex items-center space-x-4">
+          {/* Comments Count */}
+          <button
+            onClick={handleSeeMoreComments}
+            className="flex items-center cursor-pointer space-x-1 hover:text-purple-600 transition-colors"
+          >
+            <FaCommentDots />
+            <span>{comments?.length || 0}</span>
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={() => openShareModal(post)}
+            className="flex items-center cursor-pointer space-x-1 hover:text-purple-600 transition-colors"
+          >
+            <FaShareAlt />
+            <span>Share</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-3">
+        {/* Reaction Summary (Like, Love, Funny) */}
+        {Object.entries(post.reactions.summary || {}).map(([type, count]) => (
+          <span key={type} className="flex items-center space-x-1">
+            {type === "like" && <FaThumbsUp className="text-blue-500" />}
+            {type === "love" && <FaHeart className="text-red-500" />}
+            {type === "funny" && <FaLaughSquint className="text-yellow-500" />}
+            <span>{count}</span>
+          </span>
+        ))}
+        {post.reactions.total === 0 && (
+          <span className="text-gray-500">No reactions yet</span>
+        )}
+      </div>
+      {/* Comments Section */}
+      <div className="mt-4">
+        {comments.length > 0 && (
+          <CommentList comments={[comments[0]]} fetchComments={fetchComments} />
+        )}
+        {comments.length > 1 && (
+          <button
+            onClick={handleSeeMoreComments}
+            className="text-purple-600 text-sm hover:underline mt-2 cursor-pointer mb-2 block"
+          >
+            View all {comments.length} comments
+          </button>
+        )}
+        <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
+      </div>
     </div>
   );
 };

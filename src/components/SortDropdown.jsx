@@ -1,60 +1,106 @@
-const SortDropdown = ({ sortBy, setSortBy }) => (
-  <div className="dropdown mb-4 ">
-    <label tabIndex={0} className="btn m-1 bg-violet-700 text-white">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-        className="w-6 h-6 inline-block mr-1"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75"
-        />
-      </svg>
-      Filter Posts
-    </label>
-    <ul
-      tabIndex={0}
-      className="dropdown-content z-[1] menu p-2 shadow bg-blue-50 rounded-box w-52"
+import { useState, useRef, useEffect } from "react";
+import { FaSort, FaFire, FaCalendarAlt, FaCommentDots } from "react-icons/fa";
+
+const SortDropdown = ({ sortBy, setSortBy }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Function to toggle dropdown visibility
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  // Function to handle sorting and close dropdown
+  const handleSortSelect = (sortOption) => {
+    setSortBy(sortOption);
+    setIsOpen(false);
+  };
+
+  // Effect to close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative inline-block text-left mb-6 z-10"
+      ref={dropdownRef}
     >
-      <li>
+      {" "}
+      <div>
         <button
-          onClick={() => setSortBy("date")}
-          className={sortBy === "date" ? "font-bold text-blue-600" : ""}
+          onClick={toggleDropdown}
+          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 rounded-md shadow-md hover:from-purple-700 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-100 cursor-pointer transition-all duration-200"
         >
-          🗓️ Date (Newest)
+          <FaSort className="w-4 h-4 mr-2" />
+          Sort Posts
         </button>
-      </li>
-      <li>
-        <button
-          onClick={() => setSortBy("oldest")}
-          className={sortBy === "oldest" ? "font-bold text-blue-600" : ""}
-        >
-          🕒 Date (Oldest)
-        </button>
-      </li>
-      <li>
-        <button
-          onClick={() => setSortBy("reactions")}
-          className={sortBy === "reactions" ? "font-bold text-blue-600" : ""}
-        >
-          👍 Reactions
-        </button>
-      </li>
-      <li>
-        <button
-          onClick={() => setSortBy("comments")}
-          className={sortBy === "comments" ? "font-bold text-blue-600" : ""}
-        >
-          💬 Comments
-        </button>
-      </li>
-    </ul>
-  </div>
-);
+      </div>
+      {/* Dropdown content - conditionally rendered */}
+      {isOpen && (
+        <ul className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none p-1">
+          <li>
+            <button
+              onClick={() => handleSortSelect("date")}
+              className={`flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 hover:text-purple-600 transition-colors duration-200 ${
+                sortBy === "date"
+                  ? "font-semibold text-purple-600 bg-gray-50"
+                  : ""
+              }`}
+            >
+              <FaCalendarAlt className="w-4 h-4 mr-2" /> Newest
+            </button>
+          </li>
+
+          <li>
+            <button
+              onClick={() => handleSortSelect("reactions")}
+              className={`flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 hover:text-purple-600 transition-colors duration-200 ${
+                sortBy === "reactions"
+                  ? "font-semibold text-purple-600 bg-gray-50"
+                  : ""
+              }`}
+            >
+              <FaFire className="w-4 h-4 mr-2" /> Popular
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => handleSortSelect("comments")}
+              className={`flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 hover:text-purple-600 transition-colors duration-200 ${
+                sortBy === "comments"
+                  ? "font-semibold text-purple-600 bg-gray-50"
+                  : ""
+              }`}
+            >
+              <FaCommentDots className="w-4 h-4 mr-2" /> Most Discussed
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => handleSortSelect("oldest")}
+              className={`flex items-center w-full cursor-pointer px-4 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-100 hover:text-purple-600 transition-colors duration-200 ${
+                sortBy === "oldest"
+                  ? "font-semibold text-purple-600 bg-gray-50"
+                  : ""
+              }`}
+            >
+              <FaCalendarAlt className="w-4 h-4 mr-2" /> Oldest
+            </button>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+};
 
 export default SortDropdown;

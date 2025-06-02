@@ -1,9 +1,3 @@
-// enable video preview
-// enhance ui for sign in and sign up
-// enhance ui for profile page
-// skeleton loading for profile page
-// handle error and empty states for profile page
-// clean up code
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -18,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SharePostModal from "../components/SharePostModal";
+import { FaPlus } from "react-icons/fa";
 
 const FeedPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -46,6 +41,7 @@ const FeedPage = () => {
     isOpen: false,
     postId: null,
   });
+
   useEffect(() => {
     if (postsError) {
       toast.error(postsError, {
@@ -62,47 +58,76 @@ const FeedPage = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
   const [shareModal, setShareModal] = useState({
     isOpen: false,
     post: null,
   });
+
   const openShareModal = (post) => {
-    if (!user) return navigate("/login");
+    if (!user) {
+      toast.info("Please log in to share posts.", { position: "top-center" });
+      navigate("/login");
+      return;
+    }
     setShareModal({ isOpen: true, post });
   };
 
   const closeShareModal = () => setShareModal({ isOpen: false, post: null });
-  const handleSharePost = async ({ title, description }) => {
+
+  const handleSharePost = async ({
+    title: shareTitle,
+    description: shareDescription,
+  }) => {
     setSubmitting(true);
     try {
-      await sharePost(shareModal.post._id, title, description);
+      await sharePost(shareModal.post._id, shareTitle, shareDescription);
       fetchPosts();
       closeShareModal();
       toast.success("Post shared successfully", { position: "top-right" });
     } catch (err) {
       toast.error("Failed to share post", { position: "top-right" });
-      console.log(err);
+      console.error("Share error:", err);
     } finally {
       setSubmitting(false);
     }
   };
-  if (authLoading || loading)
+
+  if (authLoading || loading) {
     return (
       <>
-        <div className="w-full ">
-          <Skeleton height={60} count={1} className="mb-4" />
-        </div>
-        <div className="w-[200px] p-4">
-          <Skeleton height={40} count={1} className="mb-4" />
-        </div>
-        <div className="flex flex-col justify-items-center items-center justify-center gap-4">
-          <Skeleton height={500} width={484} count={5} />
-        </div>
-        <div className="rounded-full fixed bottom-8 right-8 w-12 h-12">
-          <Skeleton circle={true} height={48} width={48} />
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-start mb-6">
+            <Skeleton height={40} width={180} />{" "}
+            {/* Skeleton for SortDropdown */}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array(6)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i} className="bg-white rounded-lg shadow-md p-4">
+                  <div className="flex items-center mb-4">
+                    <Skeleton circle={true} height={40} width={40} />
+                    <div className="ml-3">
+                      <Skeleton width={120} />
+                      <Skeleton width={80} height={10} />
+                    </div>
+                  </div>
+                  <Skeleton height={24} width="80%" className="mb-3" />
+                  <Skeleton height={200} className="mb-4" />
+                  <Skeleton count={2} height={15} />
+                  <div className="flex justify-between items-center mt-4">
+                    <Skeleton width={150} height={20} />
+                    <Skeleton width={80} height={20} />
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
       </>
     );
+  }
 
   // Sort helper
   const sortedPosts = [...posts].sort((a, b) => {
@@ -123,6 +148,7 @@ const FeedPage = () => {
   // Open Add Post modal
   const openAddModal = () => {
     if (!user) {
+      toast.info("Please log in to create posts.", { position: "top-center" });
       navigate("/login");
       return;
     }
@@ -138,14 +164,21 @@ const FeedPage = () => {
   const openEditModal = (post) => {
     setTitle(post.title);
     setDescription(post.description);
-    setImageFile(post.mediaUrl ? post.mediaUrl : null);
+    setImageFile(null);
     setImagePreview(post.mediaUrl);
     setError(null);
     setModal({ isOpen: true, mode: "edit", post });
   };
 
   // Close Add/Edit modal
-  const closeModal = () => setModal({ isOpen: false, mode: "add", post: null });
+  const closeModal = () => {
+    setModal({ isOpen: false, mode: "add", post: null });
+    setTitle("");
+    setDescription("");
+    setImageFile(null);
+    setImagePreview(null);
+    setError(null);
+  };
 
   // Open delete confirm modal
   const openDeleteConfirm = (postId) =>
@@ -163,8 +196,8 @@ const FeedPage = () => {
       return;
     }
 
-    if (modal.mode === "add" && !imageFile) {
-      setError("Image or video is required.");
+    if (modal.mode === "add" && !imageFile && !imagePreview) {
+      setError("Image or video is required for new posts.");
       return;
     }
 
@@ -174,7 +207,15 @@ const FeedPage = () => {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      if (imageFile) formData.append("media", imageFile);
+      if (imageFile) {
+        formData.append("media", imageFile);
+      } else if (
+        modal.mode === "edit" &&
+        imagePreview &&
+        typeof imagePreview === "string"
+      ) {
+        //
+      }
 
       if (modal.mode === "add") {
         await createPost(formData);
@@ -202,82 +243,84 @@ const FeedPage = () => {
     setSubmitting(true);
     try {
       await deletePost(deleteConfirm.postId);
-      fetchPosts();
+      fetchPosts(); // Refresh feed after deletion
       closeDeleteConfirm();
       toast.success("Post deleted successfully", { position: "top-right" });
-    } catch {
-      // handle error if needed
+    } catch (err) {
       toast.error("Failed to delete post", { position: "top-right" });
+      console.error("Delete error:", err);
     } finally {
       setSubmitting(false);
     }
   };
+
   return (
     <>
       <Header />
-      <div className="p-4">
-        <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
-      </div>
-      <div className="container mx-auto p-4 flex flex-col items-center">
+      <div className="container mx-auto px-4 py-8">
+        {/* Sort Dropdown */}
+        <div className="flex justify-start mb-6">
+          <SortDropdown sortBy={sortBy} setSortBy={setSortBy} />
+        </div>
+
+        {/* Error Message */}
         {postsError && (
-          <div className="text-red-600 mb-4 mx-auto">
-            {postsError}
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 text-center">
+            <strong className="font-bold">Error!</strong>
+            <span className="block sm:inline ml-2">{postsError}</span>
             <button
               onClick={fetchPosts}
-              className="ml-4 px-3 py-1 cursor-pointer bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200"
             >
               Try Again
             </button>
           </div>
         )}
-        <div className="flex flex-col gap-4 justify-center">
-          {sortedPosts.length === 0 && (
-            <div className="text-blue-800 mx-auto">
-              No posts available. Add Post
+
+        {/* Posts Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedPosts.length === 0 ? (
+            <div className="md:col-span-3 text-center py-10 text-gray-600 text-xl">
+              No posts available. Be the first to{" "}
+              <button
+                onClick={openAddModal}
+                className="text-purple-600 font-semibold hover:underline focus:outline-none"
+              >
+                create one!
+              </button>
             </div>
+          ) : (
+            sortedPosts.map((post) => (
+              <PostCard
+                key={post._id}
+                post={post}
+                user={user}
+                openEditPopup={openEditModal}
+                openDeleteConfirm={openDeleteConfirm}
+                openShareModal={openShareModal}
+              />
+            ))
           )}
-          {sortedPosts.map((post) => (
-            <PostCard
-              key={post._id}
-              post={post}
-              user={user}
-              openEditPopup={openEditModal}
-              openDeleteConfirm={openDeleteConfirm}
-              openShareModal={openShareModal}
-              // fetchPosts={fetchPosts}
-            />
-          ))}
         </div>
 
-        {/* Floating add button */}
+        {/* Floating Add Post Button */}
         <button
           onClick={openAddModal}
-          className="fixed bottom-8 right-8 w-12 h-12 cursor-pointer rounded-full bg-violet-900 text-white text-3xl font-bold flex items-center justify-center shadow-lg hover:bg-blue-700"
-          aria-label="Add Post"
+          className="fixed bottom-8 cursor-pointer right-8 w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 text-white text-3xl flex items-center justify-center shadow-lg hover:from-purple-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          aria-label="Add New Post"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="4.5"
-            stroke="currentColor"
-            class="size-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
+          <FaPlus className="text-xl" />
         </button>
+
+        {/* Modals */}
         {shareModal.isOpen && (
           <SharePostModal
             onClose={closeShareModal}
             onShare={handleSharePost}
             submitting={submitting}
+            post={shareModal.post}
           />
         )}
-        {/* Add/Edit Modal */}
         {modal.isOpen && (
           <PostFormModal
             title={title}
@@ -292,11 +335,9 @@ const FeedPage = () => {
             submitting={submitting}
             onSubmit={handleSubmit}
             onClose={closeModal}
-            heading={modal.mode === "add" ? "Add New Post" : "Edit Post"}
+            heading={modal.mode === "add" ? "Create New Post" : "Edit Post"}
           />
         )}
-
-        {/* Delete Confirm Modal */}
         {deleteConfirm.isOpen && (
           <DeleteConfirmModal
             onClose={closeDeleteConfirm}

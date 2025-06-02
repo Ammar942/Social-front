@@ -11,13 +11,25 @@ import useFetchPosts from "../hooks/useFetchPosts";
 import DeleteConfirmModal from "../components/DeleteConfirmModal";
 import PostFormModal from "../components/PostFormModal";
 import ReactionBar from "../components/ReactionButtons";
+import {
+  FaRegEdit,
+  FaRegTrashAlt,
+  FaShareAlt,
+  FaThumbsUp,
+  FaHeart,
+  FaLaughSquint,
+  FaCommentDots,
+  FaUserCircle,
+} from "react-icons/fa";
+import moment from "moment";
+
 const PostPage = () => {
-  const { loading, createPost, updatePost, deletePost } = useFetchPosts();
+  const { createPost, updatePost, deletePost } = useFetchPosts();
   const { user } = useAuth();
   const { id } = useParams();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  //   const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [title, setTitle] = useState("");
@@ -34,6 +46,7 @@ const PostPage = () => {
     isOpen: false,
     postId: null,
   });
+
   const openDeleteConfirm = (postId) =>
     setDeleteConfirm({ isOpen: true, postId });
   const closeModal = () => setModal({ isOpen: false, mode: "add", post: null });
@@ -41,14 +54,15 @@ const PostPage = () => {
   const closeDeleteConfirm = () =>
     setDeleteConfirm({ isOpen: false, postId: null });
 
-  const openEditModal = (post) => {
-    setTitle(post.title);
-    setDescription(post.description);
-    setImageFile(post.mediaUrl ? post.mediaUrl : null);
-    setImagePreview(post.mediaUrl);
+  const openEditModal = (postToEdit) => {
+    setTitle(postToEdit.title);
+    setDescription(postToEdit.description);
+    setImageFile(null);
+    setImagePreview(postToEdit.mediaUrl);
     setError(null);
-    setModal({ isOpen: true, mode: "edit", post });
+    setModal({ isOpen: true, mode: "edit", post: postToEdit });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
@@ -62,7 +76,15 @@ const PostPage = () => {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      if (imageFile) formData.append("media", imageFile);
+      if (imageFile) {
+        formData.append("media", imageFile);
+      } else if (
+        modal.mode === "edit" &&
+        imagePreview &&
+        typeof imagePreview === "string"
+      ) {
+        //
+      }
 
       if (modal.mode === "add") {
         await createPost(formData);
@@ -84,6 +106,7 @@ const PostPage = () => {
       setSubmitting(false);
     }
   };
+
   const handleDeletePost = async () => {
     setSubmitting(true);
     try {
@@ -91,34 +114,35 @@ const PostPage = () => {
       closeDeleteConfirm();
       toast.success("Post deleted successfully", { position: "top-right" });
       navigate("/feed");
-    } catch {
-      // handle error if needed
+    } catch (err) {
       toast.error("Failed to delete post", { position: "top-right" });
+      console.error("Delete error:", err);
     } finally {
       setSubmitting(false);
     }
   };
+
   const fetchPost = async () => {
+    setPageLoading(true);
     try {
       const res = await axios.get(`/posts/${id}`);
-      console.log(res);
       setPost(res.data.data);
       setComments(res.data.data.comments || []);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch post:", err);
+      if (err.response && err.response.status === 404) {
+        navigate("/404");
+      }
+      setPost(null);
     } finally {
-      //   setLoading(false);
+      setPageLoading(false);
     }
   };
 
   const handleCommentAdded = (newComment) => {
     setComments((prev) => [...prev, newComment]);
-    fetchPost();
   };
 
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
   const handleReact = async (type) => {
     try {
       await axios.post(`/posts/${post._id}/reactions`, { type });
@@ -128,109 +152,173 @@ const PostPage = () => {
       console.error("Failed to react:", err);
     }
   };
-  if (loading) return <div>Loading post...</div>;
-  if (!post) return <div>Post not found</div>;
+
+  useEffect(() => {
+    fetchPost();
+  }, [id]);
+
+  // Loading and Not Found states
+  if (pageLoading) {
+    return (
+      <>
+        <Header />
+        <div className="flex justify-center items-center min-h-[calc(100vh-80px)]">
+          <span className="loading loading-spinner loading-lg text-purple-600"></span>
+        </div>
+      </>
+    );
+  }
+
+  if (!post) {
+    return (
+      <>
+        <Header />
+        <div className="flex justify-center items-center min-h-[calc(100vh-80px)] text-gray-700 text-xl">
+          Post not found.
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <Header />
-
-      <div className="card bg-blue-100 shadow-md max-w-2xl mx-auto p-4 flex flex-col justify-items-center justify-between mt-5">
-        <div className="flex justify-between items-center">
-          <span className="text-lg font-semibold text-blue-900">
-            {post.author.username}{" "}
-          </span>
-          <span className="text-sm text-gray-500">
-            {new Date(post.createdAt).toLocaleDateString()}
-          </span>
-        </div>
-
-        {post.sharedFrom && (
-          <span className="text-xs font-semibold text-gray-700 italic ">
-            🔁 Shared from {post.sharedFrom.author.username}
-          </span>
-        )}
-        <div className="flex justify-between items-start">
-          <h3 className="text-lg font-bold line-clamp-3">{post.title}</h3>
-
-          {user?.userId === post.author._id && (
-            <div className="flex gap-2">
-              <button
-                className="cursor-pointer"
-                onClick={() => openEditModal(post)}
-                aria-label="Edit Post"
-              >
-                ✏️
-              </button>
-              <button
-                onClick={() => openDeleteConfirm(post._id)}
-                aria-label="Delete Post"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="red"
-                  className="size-5 cursor-pointer"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                  />
-                </svg>
-              </button>
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Single Post Card (re-using styles from PostCard component logic) */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          {/* Post Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              {/* User Avatar */}
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center">
+                {/* Replace with actual user.profilePicture if available */}
+                <FaUserCircle className="text-white text-xl" />
+              </div>
+              <div>
+                <span className="block text-gray-800 font-semibold text-base">
+                  {post.author.username}
+                </span>
+                <span className="block text-gray-500 text-xs">
+                  {moment(post.createdAt).fromNow()}
+                </span>
+              </div>
             </div>
-          )}
-        </div>
-
-        {post.mediaUrl && (
-          <>
-            {post.mediaUrl.endsWith(".mp4") ? (
-              <video
-                controls
-                className="w-full max-h-96 object-contain rounded"
-              >
-                <source src={post.mediaUrl} type="video/mp4" />
-              </video>
-            ) : (
-              <div className="aspect-w-16 aspect-h-9">
-                <img
-                  src={post.mediaUrl}
-                  alt=""
-                  className="object-contain w-full h-full"
-                />
+            {/* Edit and Delete Icons */}
+            {user?.userId === post.author._id && (
+              <div className="flex space-x-3 text-gray-500">
+                <button
+                  onClick={() => openEditModal(post)}
+                  className="hover:text-purple-600 transition-colors cursor-pointer"
+                  aria-label="Edit Post"
+                >
+                  <FaRegEdit size={20} />
+                </button>
+                <button
+                  onClick={() => openDeleteConfirm(post._id)}
+                  className="hover:text-red-600 transition-colors cursor-pointer"
+                  aria-label="Delete Post"
+                >
+                  <FaRegTrashAlt size={20} />
+                </button>
               </div>
             )}
-          </>
-        )}
+          </div>
 
-        <p className="mt-2 text-sm text-gray-600 line-clamp-4">
-          {post.description}
-        </p>
-
-        <ReactionBar post={post} onReact={handleReact} />
-        <div className="mt-4 flex justify-between text-sm text-gray-500">
-          {post.reactions.total === 0 && (
-            <span className="text-gray-600">No reactions yet</span>
+          {/* Shared From (if applicable) */}
+          {post.sharedFrom && (
+            <p className="text-xs font-medium text-gray-600 italic mb-3">
+              <FaShareAlt className="inline-block mr-1 text-purple-500" />{" "}
+              Shared from {post.sharedFrom.author.username}
+            </p>
           )}
-          <span>
-            {Object.entries(post.reactions.summary || {}).map(
-              ([type, count]) => (
-                <span key={type} className="mr-2">
-                  {type === "like" && "👍"}
-                  {type === "love" && "❤️"}
-                  {type === "funny" && "😂"} {count}
-                </span>
-              )
-            )}
-          </span>
+
+          {/* Post Title */}
+          <h2 className="text-xl font-bold text-gray-800 mb-3">{post.title}</h2>
+
+          {/* Post Media (Image/Video) */}
+          {post.mediaUrl && (
+            <div className="mb-4 rounded-lg overflow-hidden border border-gray-200">
+              {post.mediaUrl.endsWith(".mp4") ? (
+                <video
+                  controls
+                  className="w-full h-auto max-h-[500px] object-contain"
+                >
+                  <source src={post.mediaUrl} type="video/mp4" />
+                </video>
+              ) : (
+                <img
+                  src={post.mediaUrl}
+                  alt={post.title}
+                  className="w-full h-auto max-h-[500px] object-contain"
+                />
+              )}
+            </div>
+          )}
+
+          {/* Post Content/Description */}
+          <p className="text-gray-700 text-base leading-relaxed mb-4">
+            {post.description}
+          </p>
+
+          {/* Reaction Summary and Action Buttons Row */}
+          <div className="flex items-center justify-between text-gray-600 text-sm mb-4 border-b border-gray-200 pb-3">
+            <div className="flex items-center space-x-4">
+              {/* Reaction Summary (Like, Love, Funny) */}
+              {Object.entries(post.reactions.summary || {}).length > 0 ? (
+                Object.entries(post.reactions.summary || {}).map(
+                  ([type, count]) => (
+                    <span key={type} className="flex items-center space-x-1">
+                      {type === "like" && (
+                        <FaThumbsUp className="text-blue-500" />
+                      )}
+                      {type === "love" && <FaHeart className="text-red-500" />}
+                      {type === "funny" && (
+                        <FaLaughSquint className="text-yellow-500" />
+                      )}
+                      <span>{count}</span>
+                    </span>
+                  )
+                )
+              ) : (
+                <span className="text-gray-500">No reactions yet</span>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-4">
+              {/* Comments Count */}
+              <span className="flex items-center space-x-1">
+                <FaCommentDots />
+                <span>{comments?.length || 0} Comments</span>
+              </span>
+
+              {/* Share Button (if not explicitly handled in ReactionBar) */}
+              <button
+                onClick={() => {
+                  toast.info("Share functionality coming soon!");
+                }}
+                className="flex items-center space-x-1 cursor-pointer hover:text-purple-600 transition-colors"
+              >
+                <FaShareAlt />
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Reaction Buttons Bar (Like, Comment, Share buttons) */}
+          <ReactionBar post={post} onReact={handleReact} />
         </div>
-        <CommentList comments={comments} />
-        <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
+
+        {/* Comments Section */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Comments</h3>
+          <CommentInput postId={post._id} onCommentAdded={handleCommentAdded} />
+          <div className="mt-4">
+            <CommentList comments={comments} />
+          </div>
+        </div>
       </div>
-      {/* Add/Edit Modal */}
+
+      {/* Add/Edit Post Modal */}
       {modal.isOpen && (
         <PostFormModal
           title={title}
@@ -245,7 +333,7 @@ const PostPage = () => {
           submitting={submitting}
           onSubmit={handleSubmit}
           onClose={closeModal}
-          heading={modal.mode === "Edit Post"}
+          heading={modal.mode === "edit" ? "Edit Post" : "Create New Post"}
         />
       )}
 
