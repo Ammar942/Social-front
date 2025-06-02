@@ -50,14 +50,14 @@ const SharePostModal = ({ onClose, onShare, submitting }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 cursor-pointer bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+              className="px-4 py-2 cursor-pointer bg-gray-300 rounded-2xl text-gray-700  hover:bg-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 cursor-pointer bg-violet-700 text-white rounded hover:bg-violet-800"
+              className="px-4 py-2 cursor-pointer bg-violet-700 rounded-2xl text-white  hover:bg-violet-800"
             >
               {submitting ? (
                 <span className="loading loading-spinner loading-md"></span>
