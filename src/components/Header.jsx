@@ -1,6 +1,11 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../contexts/auth/useAuth";
-import { FaHome, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaHome,
+  FaUserCircle,
+  FaSignOutAlt,
+  FaSignInAlt,
+} from "react-icons/fa";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -51,7 +56,7 @@ const Header = () => {
 
       {/* User Info and Logout */}
       <div className="flex items-center space-x-4">
-        {user && (
+        {user ? (
           <>
             <Link
               to="/profile"
@@ -75,6 +80,17 @@ const Header = () => {
               <span>Logout</span>
             </button>
           </>
+        ) : (
+          <button
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+            className="flex items-center space-x-2 cursor-pointer text-gray-600 hover:text-purple-500 font-semibold transition-colors duration-200"
+          >
+            <FaSignInAlt className="text-lg" />
+            <span>Login</span>
+          </button>
         )}
       </div>
     </div>

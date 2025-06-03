@@ -1,3 +1,4 @@
+import { useState } from "react";
 import useAuth from "../contexts/auth/useAuth";
 
 const typeToEmoji = {
@@ -8,7 +9,9 @@ const typeToEmoji = {
 const reactionTypes = ["like", "love", "funny"];
 
 const ReactionBar = ({ post, onReact }) => {
+  const [reactionsLoading, setReactionsLoading] = useState(false);
   const { user } = useAuth();
+
   const userId = user?.userId;
   const userReacted = post.reactions.reactions.find((r) => r.user === userId);
   return (
@@ -18,15 +21,22 @@ const ReactionBar = ({ post, onReact }) => {
         return (
           <button
             key={type}
-            onClick={() => onReact(type)}
+            onClick={() => {
+              onReact(type, setReactionsLoading);
+            }}
             aria-label={`React with ${type}`}
-            className={`flex items-center gap-1 text-sm cursor-pointer  ${
+            className={`flex items-center gap-1 text-sm cursor-pointer hover:scale-120  ${
               userReacted?.type === type
                 ? "text-blue-600 font-bold"
                 : "text-gray-600"
             }`}
           >
-            {typeToEmoji[type]} {<span>{count}</span>}
+            {typeToEmoji[type]}{" "}
+            {reactionsLoading ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : (
+              <span>{count}</span>
+            )}
           </button>
         );
       })}

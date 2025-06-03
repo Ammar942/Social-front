@@ -42,19 +42,48 @@ const PostCard = ({
     }
   };
 
-  const handleReact = async (type) => {
+  const handleReact = async (type, setLoading) => {
     if (!user) {
       toast.info("Please log in to react to posts.", {
         position: "top-right",
         autoClose: 3000,
       });
+      setLoading(false);
       return;
     }
     try {
+      // setPost((prev) => ({
+      //   ...prev,
+      //   reactions: {
+      //     ...prev.reactions,
+      //     total: prev.reactions.total + 1,
+      //     summary: {
+      //       ...prev.reactions.summary,
+      //       [type]: (prev.reactions.summary[type] || 0) + 1,
+      //     },
+      //   },
+      // }));
+      setLoading(true);
       await axios.post(`/posts/${post._id}/reactions`, { type });
       const updatedPost = await axios.get(`/posts/${post._id}`);
       setPost(updatedPost.data.data);
+      setLoading(false);
     } catch (err) {
+      toast.error("Failed to react to the post. Please try again.", {
+        position: "top-right",
+      });
+      // setPost((prev) => ({
+      //   ...prev,
+      //   reactions: {
+      //     ...prev.reactions,
+      //     total: prev.reactions.total - 1,
+      //     summary: {
+      //       ...prev.reactions.summary,
+      //       [type]: (prev.reactions.summary[type] || 0) - 1,
+      //     },
+      //   },
+      // }));
+      setLoading(false);
       console.error("Failed to react:", err);
     }
   };
@@ -158,14 +187,14 @@ const PostCard = ({
 
       <div className="flex items-center space-x-3">
         {/* Reaction Summary (Like, Love, Funny) */}
-        {Object.entries(post.reactions.summary || {}).map(([type, count]) => (
+        {/* {Object.entries(post.reactions.summary || {}).map(([type, count]) => (
           <span key={type} className="flex items-center space-x-1">
             {type === "like" && <FaThumbsUp className="text-blue-500" />}
             {type === "love" && <FaHeart className="text-red-500" />}
             {type === "funny" && <FaLaughSquint className="text-yellow-500" />}
             <span>{count}</span>
           </span>
-        ))}
+        ))} */}
         {post.reactions.total === 0 && (
           <span className="text-gray-500">No reactions yet</span>
         )}
