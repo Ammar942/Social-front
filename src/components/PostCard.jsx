@@ -52,17 +52,6 @@ const PostCard = ({
       return;
     }
     try {
-      // setPost((prev) => ({
-      //   ...prev,
-      //   reactions: {
-      //     ...prev.reactions,
-      //     total: prev.reactions.total + 1,
-      //     summary: {
-      //       ...prev.reactions.summary,
-      //       [type]: (prev.reactions.summary[type] || 0) + 1,
-      //     },
-      //   },
-      // }));
       setLoading(true);
       await axios.post(`/posts/${post._id}/reactions`, { type });
       const updatedPost = await axios.get(`/posts/${post._id}`);
@@ -72,17 +61,6 @@ const PostCard = ({
       toast.error("Failed to react to the post. Please try again.", {
         position: "top-right",
       });
-      // setPost((prev) => ({
-      //   ...prev,
-      //   reactions: {
-      //     ...prev.reactions,
-      //     total: prev.reactions.total - 1,
-      //     summary: {
-      //       ...prev.reactions.summary,
-      //       [type]: (prev.reactions.summary[type] || 0) - 1,
-      //     },
-      //   },
-      // }));
       setLoading(false);
       console.error("Failed to react:", err);
     }
